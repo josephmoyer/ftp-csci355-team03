@@ -4,15 +4,15 @@ from ftplib import FTP
 def callback(data):
 	print data
 	print
-
-ftp = FTP('ftp.drwestfall.net')
-ftp.login(user='ftp03', passwd='student')    # login into the ftp site with the correct credentials
-ftp.getwelcome() 	# does not do anything at the moment
-ftp.retrlines('LIST') 	# Lists the contents of the directory
-ftp.retrlines('RETR test.txt', callback) 	#returns the contents of the file. 
-ftp.storlines('STOR newfile.txt', open('newfile.txt')) 	 # uploads the file to the server
-ftp.retrlines('RETR newfile.txt', callback)
-
-ftp.quit()
-
+def login(addr, usr, pwd):
+	ftp = FTP(addr)
+	ftp.login(user=usr, passwd=pwd)    # login into the ftp site with the correct credentials
+def listFiles():
+	ftp.retrlines('LIST') 	# Lists the contents of the directory
+def getFile(filename):
+	ftp.retrlines('RETR '+filename, callback) 	#returns the contents of the file. 
+def upFile(filename):
+	ftp.storlines('STOR '+filename, open(filename)) 	 # uploads the file to the server
+def quit():
+	ftp.quit()
 
