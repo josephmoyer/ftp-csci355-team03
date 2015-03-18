@@ -26,7 +26,7 @@ def changeDir(direc):
 	ftp.cwd(direc)
 def deleteDir(direc):
 	ftp.rmd(direc)
-def newDir(direc)
+def newDir(direc):
 	ftp.mkd(direc)
 def quit():
 	ftp.quit()
