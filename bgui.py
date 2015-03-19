@@ -14,8 +14,9 @@ import gettext
 # end wxGlade
 from ftp import login,quit,getFile,upFile,listFiles
 class MyFrame2(wx.Frame):
-    global address
     address = ''
+    user = ''
+    pwd = ''
     def __init__(self, *args, **kwds):
         # begin wxGlade: MyFrame2.__init__
         kwds["style"] = wx.DEFAULT_FRAME_STYLE
@@ -57,34 +58,39 @@ class MyFrame2(wx.Frame):
         # end wxGlade
 
     def TextHandler(self, event):  # wxGlade: MyFrame2.<event_handler>
-	    global address
-	    address = event.GetString()
+	    self.address = event.GetString()
 
     def Conn(self, event):  # wxGlade: MyFrame2.<event_handler>
-	    if not address:
+	    if not self.address:
 		    wx.MessageBox('Please enter address first')
 		    return
 	    user = wx.TextEntryDialog(None,'Enter username','Login','')
 	    if user.ShowModal() == wx.ID_OK:
-		    user = user.GetValue()
+		    self.user = user.GetValue()
 		    pwd = wx.TextEntryDialog(None,'Enter password','Login','')
 		    if pwd.ShowModal() == wx.ID_OK:
-			    pwd = pwd.GetValue()
-		    if not pwd or not user:
-			   return
-	    login(address, user, pwd)
-	    
+			    self.pwd = pwd.GetValue()
+		    if not self.pwd or not self.user:
+			    wx.MessageBox('username/password cannot be blank')
+			    return
+	    if login(self.address, self.user, self.pwd) == False:
+		    wx.MessageBox('Check login credentials')
+		    return
+	    else:
+			wx.MessageBox('Login Successful')
 
     def FileUpload(self, event):  # wxGlade: MyFrame2.<event_handler>
-        filename = '' 
+        #global user,pwd
+        filename = ''
         dlg = wx.FileDialog(self, message="Choose a file")
         if dlg.ShowModal() == wx.ID_OK:
 	        filename = dlg.GetPath()
         dlg.Destroy()
         if not filename:
 		   return
-        upFile(filename)
         self.label_2.SetLabel(filename)
+        login(self.address,self.user,self.pwd)
+        upFile(filename)
         quit()
 
 # end of class MyFrame2
