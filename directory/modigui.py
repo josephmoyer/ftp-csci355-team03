@@ -53,14 +53,10 @@ class MyFrame(wx.Frame):
         self.Layout()
         # end wxGlade
 
-    def showFiles(data):
-        for x in data:
-            self.list_box.Append(x)
-
     def ButtonToLoad(self, event):
         data = listFiles()
 
-        showFiles(data)
+        self.showFiles(data)
 
     def ViewDir(self, event):
         currDir = GetCurrentDir()
@@ -72,7 +68,7 @@ class MyFrame(wx.Frame):
         self.list_box.Clear()
 
         data = listFiles()
-        showFiles(data)
+        self.showFiles(data)
 
 
     def DeleteItem(self, event):
@@ -85,7 +81,11 @@ class MyFrame(wx.Frame):
 
         self.list_box.Clear()
         data = listFiles()
-        showFiles(data)
+        self.showFiles(data)
+
+    def showFiles(self, data):
+        for x in data:
+            self.list_box.Append(x)
 
 # end of class MyFrame
 if __name__ == "__main__":
