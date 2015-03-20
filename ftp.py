@@ -5,19 +5,20 @@ global ftp
 def callback(data):
 	print data
 	print
-# def login(addr, usr, pwd):
-# 	global ftp
-# 	ftp = FTP(addr)
-# 	if '230' in ftp.login(user=usr, passwd=pwd):    # login into the ftp site with the correct credentials
-# 		return True
-# 	else:
-# 		return False
-
-def login():
+def login(addr, usr, pwd):
 	global ftp
-	ftp = FTP('ftp.drwestfall.net')
+	ftp = FTP(addr)
+	if '230' in ftp.login(user=usr, passwd=pwd):    # login into the ftp site with the correct credentials
+		return True
+	else:
+		return False
 
-	ftp.login('ftp03', 'student')
+# Easy login to skip entering data
+# def login():
+# 	global ftp
+# 	ftp = FTP('ftp.drwestfall.net')
+
+# 	ftp.login('ftp03', 'student')
 
 def listFiles():
     global ftp
@@ -52,6 +53,9 @@ def deleteFile(fileName):
     ftp.delete(fileName)
 def deleteDir(dirName):
     ftp.rmd(dirName)
+# def ShowPath(filename):
+# 	print os.path.realpath(filename)
+# 	return os.path.realpath(filename)
 def quit():
 	ftp.quit()
 

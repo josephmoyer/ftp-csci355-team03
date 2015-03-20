@@ -14,6 +14,7 @@ import gettext
 # end wxGlade
 import os
 from ftp import login,quit,getFile,upFile,listFiles,GetCurrentDir,SetCurrentDir,deleteFile,deleteDir,CreateNewDir
+# ShowPath
 
 class MyFrame(wx.Frame):
     address = ''
@@ -55,8 +56,9 @@ class MyFrame(wx.Frame):
         self.Bind(wx.EVT_BUTTON, self.btnProperties_Click, self.btnProperties)
         # end wxGlade
 
-        login()
-        self.showFiles()
+        # Used in conjunction with the easy login
+        # login()
+        # self.showFiles()
 
     def __set_properties(self):
         # begin wxGlade: MyFrame.__set_properties
@@ -120,29 +122,29 @@ class MyFrame(wx.Frame):
     #     event.Skip()
 
     def btnConnect_Click(self, event):  # wxGlade: MyFrame.<event_handler>
-        event.Skip()
-        # address = self.txtHostAddress.GetLineText(0)
-        # print address
+        # event.Skip()
+        address = self.txtHostAddress.GetLineText(0)
+        print address
 
-        # if address == '':
-        #     wx.MessageBox('Please enter address first')
-        #     return
+        if address == '':
+            wx.MessageBox('Please enter address first')
+            return
 
-        # user = wx.TextEntryDialog(None,'Enter username','Login','')
-        # if user.ShowModal() == wx.ID_OK:
-        #     user = user.GetValue()
-        #     pwd = wx.TextEntryDialog(None,'Enter password','Login','')
-        #     if pwd.ShowModal() == wx.ID_OK:
-        #         pwd = pwd.GetValue()
-        #     if not pwd or not user:
-        #         wx.MessageBox('username/password cannot be blank')
-        #         return
-        # if login(address, user, pwd) == False:
-        #     wx.MessageBox('Check login credentials')
-        #     return
-        # else:
-        #     wx.MessageBox('Login Successful')
-        #     self.showFiles()
+        user = wx.TextEntryDialog(None,'Enter username','Login','')
+        if user.ShowModal() == wx.ID_OK:
+            user = user.GetValue()
+            pwd = wx.TextEntryDialog(None,'Enter password','Login','')
+            if pwd.ShowModal() == wx.ID_OK:
+                pwd = pwd.GetValue()
+            if not pwd or not user:
+                wx.MessageBox('username/password cannot be blank')
+                return
+        if login(address, user, pwd) == False:
+            wx.MessageBox('Check login credentials')
+            return
+        else:
+            wx.MessageBox('Login Successful')
+            self.showFiles()
 
     def listboxFiles_DoubleClick(self, event):  # wxGlade: MyFrame.<event_handler>
         print "Entered view dir"
@@ -170,6 +172,7 @@ class MyFrame(wx.Frame):
             self.listboxFiles.Delete(0)
 
         self.showFiles()
+        # self.updatePath()
 
     # def listboxFiles_Click(self, event):  # wxGlade: MyFrame.<event_handler>
     #     print "Event handler 'listboxFiles_Click' not implemented!"
@@ -245,6 +248,11 @@ class MyFrame(wx.Frame):
 
         for x in data:
             self.listboxFiles.Append(x)
+
+    # def updatePath(self):
+    #     filename = self.listboxFiles.GetStringSelection()
+    #     path = str(ShowPath(filename))
+    #     self.txtPath.WriteText(path)
 
 # end of class MyFrame
 
