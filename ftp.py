@@ -11,7 +11,7 @@ def callback(data):
 def progress(data):
     global sizeWritten
     sizeWritten += 8192
-    print (str(round(sizeWritten / 1024. / 1024.,2)) + 'Mb / '+ (str(round(totSize / 1024. / 1024.,2)) + 'Mb'))
+    print (str(round(sizeWritten / 1024. / 1024.,5)) + 'Mb / '+ (str(round(totSize / 1024. / 1024.,5)) + 'Mb'))
     
 def login(addr, usr, pwd):
 	global ftp
@@ -34,7 +34,7 @@ def upFile(filename):
     os.chdir(direc)  #changes to the directory of the file
     totSize = os.path.getsize(f)
     ftp.storbinary('STOR '+f, open(f,'rb'), 8192, progress) 	 # uploads the file to the server
-    f.close()
+    #f.close()
     sizeWritten = 0
     totSize = 0
     print 'Done uploading'
