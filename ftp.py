@@ -41,11 +41,13 @@ def upFile(filename):
 def deleteFile(filename):
 	ftp.delete(filename)
 def GetCurrentDir():
-    print ftp.pwd()
+    # print ftp.pwd()
     return ftp.pwd()
 def SetCurrentDir(nameOfDir):
-    print "Setting curr dir"
+    # print "Setting curr dir"
     ftp.cwd(nameOfDir)
+def CreateNewDir(name):
+	ftp.mkd(name)
 def deleteFile(fileName):
     ftp.delete(fileName)
 def deleteDir(dirName):

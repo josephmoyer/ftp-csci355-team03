@@ -12,8 +12,8 @@ import gettext
 
 # begin wxGlade: extracode
 # end wxGlade
-
-from ftp import login,quit,getFile,upFile,listFiles,GetCurrentDir,SetCurrentDir,deleteFile,deleteDir
+import os
+from ftp import login,quit,getFile,upFile,listFiles,GetCurrentDir,SetCurrentDir,deleteFile,deleteDir,CreateNewDir
 
 class MyFrame(wx.Frame):
     address = ''
@@ -208,8 +208,17 @@ class MyFrame(wx.Frame):
         self.listboxFiles_DoubleClick(event)
 
     def btnNewDir_Click(self, event):  # wxGlade: MyFrame.<event_handler>
-        print "Event handler 'btnNewDir_Click' not implemented!"
-        event.Skip()
+        os.chdir(GetCurrentDir())
+
+        dir_name = wx.TextEntryDialog(None,'Enter directory name','Name','')
+
+        if dir_name.ShowModal() == wx.ID_CANCEL:
+            return
+
+        CreateNewDir(dir_name.GetValue())
+
+        self.listboxFiles.Clear()
+        self.showFiles()
 
     def btnDelDir_Click(self, event):  # wxGlade: MyFrame.<event_handler>
         print "Event handler 'btnDelDir_Click' not implemented!"
