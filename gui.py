@@ -14,6 +14,7 @@ import gettext
 # end wxGlade
 import os
 from ftp import login,quit,getFile,upFile,listFiles,GetCurrentDir,SetCurrentDir,deleteFile,deleteDir,CreateNewDir
+
 # ShowPath
 
 class MyFrame(wx.Frame):
@@ -145,34 +146,38 @@ class MyFrame(wx.Frame):
         else:
             wx.MessageBox('Login Successful')
             self.showFiles()
+            self.updatePath('/')
 
     def listboxFiles_DoubleClick(self, event):  # wxGlade: MyFrame.<event_handler>
+        # global fullPath
         print "Entered view dir"
 
         if self.listboxFiles.GetStringSelection() == '<--':
             SetCurrentDir('..')
-        else:
+            # self.fullPath.pop()
             currDir = GetCurrentDir()
-            # print currDir
+            self.updatePath(currDir)
+        else:
             SetCurrentDir(self.listboxFiles.GetStringSelection())
             # print self.listboxFiles.GetStringSelection()
+            currDir = GetCurrentDir()
+            print currDir
+            # self.fullPath.append(currDir)
+            self.updatePath(currDir)
+
         
         # GetCurrentDir()
 
         self.listboxFiles.Clear()
 
-        font = wx.Font(11,wx.FONTFAMILY_DEFAULT,wx.FONTSTYLE_NORMAL,wx.FONTWEIGHT_BOLD)
-
-        self.listboxFiles.SetItemFont(1,font)
-
         if GetCurrentDir() != '/':
             self.listboxFiles.Append('<--')
-            self.listboxFiles.SetItemFont(0,font)
         else:
             self.listboxFiles.Delete(0)
 
         self.showFiles()
-        # self.updatePath()
+
+
 
     # def listboxFiles_Click(self, event):  # wxGlade: MyFrame.<event_handler>
     #     print "Event handler 'listboxFiles_Click' not implemented!"
@@ -211,7 +216,7 @@ class MyFrame(wx.Frame):
         self.listboxFiles_DoubleClick(event)
 
     def btnNewDir_Click(self, event):  # wxGlade: MyFrame.<event_handler>
-        os.chdir(GetCurrentDir())
+        # os.chdir(GetCurrentDir())
 
         dir_name = wx.TextEntryDialog(None,'Enter directory name','Name','')
 
@@ -221,6 +226,9 @@ class MyFrame(wx.Frame):
         CreateNewDir(dir_name.GetValue())
 
         self.listboxFiles.Clear()
+
+        self.listboxFiles.Append('<--')
+
         self.showFiles()
 
     def btnDel_Click(self, event):  # wxGlade: MyFrame.<event_handler>
@@ -249,10 +257,12 @@ class MyFrame(wx.Frame):
         for x in data:
             self.listboxFiles.Append(x)
 
-    # def updatePath(self):
-    #     filename = self.listboxFiles.GetStringSelection()
-    #     path = str(ShowPath(filename))
-    #     self.txtPath.WriteText(path)
+    def updatePath(self, currDir):
+        # filename = self.listboxFiles.GetStringSelection()
+        # path = str(ShowPath(filename))
+        self.txtPath.Clear()
+        # path = ''.join(self.fullPath)
+        self.txtPath.WriteText(currDir)
 
 # end of class MyFrame
 

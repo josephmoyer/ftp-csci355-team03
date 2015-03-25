@@ -48,6 +48,8 @@ def SetCurrentDir(nameOfDir):
     # print "Setting curr dir"
     ftp.cwd(nameOfDir)
 def CreateNewDir(name):
+	ftp.dir()
+	# os.chdir(GetCurrentDir())
 	ftp.mkd(name)
 def deleteFile(fileName):
     ftp.delete(fileName)
