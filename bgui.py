@@ -12,11 +12,48 @@ import gettext
 
 # begin wxGlade: extracode
 # end wxGlade
-from ftp import login,quit,getFile,upFile,listFiles
+#from ftp import login,quit,getFile,upFile,listFiles
+from ftplib import FTP
+import os.path
 class MyFrame2(wx.Frame):
     address = ''
     user = ''
     pwd = ''
+    ftp = ''
+    sizeWritten = 0
+    totSize = 0
+    
+    def login(self, addr, usr, pwd):
+	    self.ftp = FTP(addr)
+	    if '230' in self.ftp.login(user=usr, passwd=pwd):    # login into the ftp site with the correct credentials
+		    return True
+	    else:
+		    return False
+    def listFiles(self):
+	    self.ftp.retrlines('LIST') 	# Lists the contents of the directory
+    def getFile(self,filename):
+        self.ftp.retrbinary('RETR '+filename, progress, 8192) 	#returns the contents of the file.
+        self.sizeWritten = 0
+    def upFile(self,filename):
+        direc, f = os.path.split(filename)
+        os.chdir(direc)  #changes to the directory of the file
+        self.totSize = os.path.getsize(f)
+        self.ftp.storbinary('STOR '+f, open(f,'rb'), 8192, self.progress)    # uploads the file to the server
+        #f.close()
+        self.sizeWritten = 0
+        self.totSize = 0
+        print 'Done uploading'
+    def deleteFile(self, filename):
+	    self.ftp.delete(filename)
+    def changeDir(self,direc):
+	    self.ftp.cwd(direc)
+    def deleteDir(direc):
+	    self.ftp.rmd(direc)
+    def newDir(direc):
+	    self.ftp.mkd(direc)
+    def quit(self):
+	    self.ftp.quit()
+
     def __init__(self, *args, **kwds):
         # begin wxGlade: MyFrame2.__init__
         kwds["style"] = wx.DEFAULT_FRAME_STYLE
@@ -73,7 +110,7 @@ class MyFrame2(wx.Frame):
 		    if not self.pwd or not self.user:
 			    wx.MessageBox('username/password cannot be blank')
 			    return
-	    if login(self.address, self.user, self.pwd) == False:
+	    if self.login(self.address, self.user, self.pwd) == False:
 		    wx.MessageBox('Check login credentials')
 		    return
 	    else:
@@ -88,10 +125,15 @@ class MyFrame2(wx.Frame):
         dlg.Destroy()
         if not filename:
 		   return
-        self.label_2.SetLabel(filename)
-        login(self.address,self.user,self.pwd)
-        upFile(filename)
-        quit()
+        #self.label_2.SetLabel(filename)
+        self.login(self.address,self.user,self.pwd)
+        self.upFile(filename)
+        self.quit()
+
+    def progress(self, data):
+        self.sizeWritten += 8192
+        self.label_2.SetLabel(str(round(self.sizeWritten / 1024. / 1024.,4)) + 'Mb / '+ (str(round(self.totSize / 1024. / 1024.,4)) + 'Mb'))
+        print (str(round(self.sizeWritten / 1024. / 1024.,4)) + 'Mb / '+ (str(round(self.totSize / 1024. / 1024.,4)) + 'Mb'))
 
 # end of class MyFrame2
 if __name__ == "__main__":
