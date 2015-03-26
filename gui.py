@@ -12,9 +12,15 @@ import gettext
 
 # begin wxGlade: extracode
 # end wxGlade
+import os
+from ftp import login,quit,getFile,upFile,listFiles,GetCurrentDir,SetCurrentDir,deleteFile,deleteDir,CreateNewDir
 
+# ShowPath
 
 class MyFrame(wx.Frame):
+    address = ''
+    user = ''
+    pwd = ''
     def __init__(self, *args, **kwds):
         # begin wxGlade: MyFrame.__init__
         kwds["style"] = wx.DEFAULT_FRAME_STYLE
@@ -31,7 +37,7 @@ class MyFrame(wx.Frame):
         self.static_line_2 = wx.StaticLine(self, wx.ID_ANY)
         self.btnOpenDir = wx.Button(self, wx.ID_ANY, _("Open Folder"))
         self.btnNewDir = wx.Button(self, wx.ID_ANY, _("New Folder..."))
-        self.btnDelDir = wx.Button(self, wx.ID_ANY, _("Delete Folder"))
+        self.btnDel = wx.Button(self, wx.ID_ANY, _("Delete"))
         self.static_line_3 = wx.StaticLine(self, wx.ID_ANY)
         self.btnProperties = wx.Button(self, wx.ID_ANY, _("Properties..."))
         self.gauge_1 = wx.Gauge(self, wx.ID_ANY, 10)
@@ -39,17 +45,21 @@ class MyFrame(wx.Frame):
         self.__set_properties()
         self.__do_layout()
 
-        self.Bind(wx.EVT_TEXT, self.txtHostAddress_Changed, self.txtHostAddress)
+        # self.Bind(wx.EVT_TEXT, self.txtHostAddress_Changed, self.txtHostAddress)
         self.Bind(wx.EVT_BUTTON, self.btnConnect_Click, self.btnConnect)
         self.Bind(wx.EVT_LISTBOX_DCLICK, self.listboxFiles_DoubleClick, self.listboxFiles)
-        self.Bind(wx.EVT_LISTBOX, self.listboxFiles_Click, self.listboxFiles)
+        # self.Bind(wx.EVT_LISTBOX, self.listboxFiles_Click, self.listboxFiles)
         self.Bind(wx.EVT_BUTTON, self.btnUpload_Click, self.btnUpload)
         self.Bind(wx.EVT_BUTTON, self.btnDownload_Click, self.btnDownload)
         self.Bind(wx.EVT_BUTTON, self.btnOpenDir_Click, self.btnOpenDir)
         self.Bind(wx.EVT_BUTTON, self.btnNewDir_Click, self.btnNewDir)
-        self.Bind(wx.EVT_BUTTON, self.btnDelDir_Click, self.btnDelDir)
+        self.Bind(wx.EVT_BUTTON, self.btnDel_Click, self.btnDel)
         self.Bind(wx.EVT_BUTTON, self.btnProperties_Click, self.btnProperties)
         # end wxGlade
+
+        # Used in conjunction with the easy login
+        # login()
+        # self.showFiles()
 
     def __set_properties(self):
         # begin wxGlade: MyFrame.__set_properties
@@ -67,7 +77,7 @@ class MyFrame(wx.Frame):
         self.static_line_2.SetMinSize((148, 5))
         self.btnOpenDir.SetMinSize((150, 29))
         self.btnNewDir.SetMinSize((150, 29))
-        self.btnDelDir.SetMinSize((150, 29))
+        self.btnDel.SetMinSize((150, 29))
         self.static_line_3.SetMinSize((148, 5))
         self.btnProperties.SetMinSize((150, 29))
         self.gauge_1.SetMinSize((600, 15))
@@ -97,7 +107,7 @@ class MyFrame(wx.Frame):
         sizer_9.Add(self.static_line_2, 0, wx.EXPAND, 0)
         sizer_9.Add(self.btnOpenDir, 0, 0, 0)
         sizer_9.Add(self.btnNewDir, 0, 0, 0)
-        sizer_9.Add(self.btnDelDir, 0, 0, 0)
+        sizer_9.Add(self.btnDel, 0, 0, 0)
         sizer_9.Add(self.static_line_3, 0, wx.EXPAND, 0)
         sizer_9.Add(self.btnProperties, 0, 0, 0)
         sizer_6.Add(sizer_9, 1, wx.EXPAND, 0)
@@ -108,41 +118,130 @@ class MyFrame(wx.Frame):
         self.Layout()
         # end wxGlade
 
-    def txtHostAddress_Changed(self, event):  # wxGlade: MyFrame.<event_handler>
-        print "Event handler 'txtHostAddress_Changed' not implemented!"
-        event.Skip()
+    # def txtHostAddress_Changed(self, event):  # wxGlade: MyFrame.<event_handler>
+    #     print "Event handler 'txtHostAddress_Changed' not implemented!"
+    #     event.Skip()
 
     def btnConnect_Click(self, event):  # wxGlade: MyFrame.<event_handler>
-        print "Event handler 'btnConnect_Click' not implemented!"
-        event.Skip()
+        # event.Skip()
+        address = self.txtHostAddress.GetLineText(0)
+        print address
+
+        if address == '':
+            wx.MessageBox('Please enter address first')
+            return
+
+        user = wx.TextEntryDialog(None,'Enter username','Login','')
+        if user.ShowModal() == wx.ID_OK:
+            user = user.GetValue()
+            pwd = wx.TextEntryDialog(None,'Enter password','Login','')
+            if pwd.ShowModal() == wx.ID_OK:
+                pwd = pwd.GetValue()
+            if not pwd or not user:
+                wx.MessageBox('username/password cannot be blank')
+                return
+        if login(address, user, pwd) == False:
+            wx.MessageBox('Check login credentials')
+            return
+        else:
+            wx.MessageBox('Login Successful')
+            self.showFiles()
+            self.updatePath('/')
 
     def listboxFiles_DoubleClick(self, event):  # wxGlade: MyFrame.<event_handler>
-        print "Event handler 'listboxFiles_DoubleClick' not implemented!"
-        event.Skip()
+        # global fullPath
+        print "Entered view dir"
 
-    def listboxFiles_Click(self, event):  # wxGlade: MyFrame.<event_handler>
-        print "Event handler 'listboxFiles_Click' not implemented!"
-        event.Skip()
+        if self.listboxFiles.GetStringSelection() == '<--':
+            SetCurrentDir('..')
+            # self.fullPath.pop()
+            currDir = GetCurrentDir()
+            self.updatePath(currDir)
+        else:
+            SetCurrentDir(self.listboxFiles.GetStringSelection())
+            # print self.listboxFiles.GetStringSelection()
+            currDir = GetCurrentDir()
+            print currDir
+            # self.fullPath.append(currDir)
+            self.updatePath(currDir)
+
+        
+        # GetCurrentDir()
+
+        self.listboxFiles.Clear()
+
+        if GetCurrentDir() != '/':
+            self.listboxFiles.Append('<--')
+        else:
+            self.listboxFiles.Delete(0)
+
+        self.showFiles()
+
+
+
+    # def listboxFiles_Click(self, event):  # wxGlade: MyFrame.<event_handler>
+    #     print "Event handler 'listboxFiles_Click' not implemented!"
+    #     event.Skip()
 
     def btnUpload_Click(self, event):  # wxGlade: MyFrame.<event_handler>
-        print "Event handler 'btnUpload_Click' not implemented!"
-        event.Skip()
+        filename = ''
+        dlg = wx.FileDialog(self, message="Choose a file")
+        if dlg.ShowModal() == wx.ID_OK:
+            filename = dlg.GetPath()
+        dlg.Destroy()
+        if not filename:
+           return
+        upFile(filename)
+        self.listboxFiles.Clear()
+        self.showFiles()
+        # event.Skip()
 
     def btnDownload_Click(self, event):  # wxGlade: MyFrame.<event_handler>
-        print "Event handler 'btnDownload_Click' not implemented!"
-        event.Skip()
+        filename = self.listboxFiles.GetStringSelection()
+
+        msg = "Save " + filename + " file"
+
+        save_dlg = wx.FileDialog(self, msg,"",filename,"",wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
+
+        if save_dlg.ShowModal() == wx.ID_CANCEL:
+            return
+
+        path = save_dlg.GetPath()
+
+        print path
+
+        getFile(path)
 
     def btnOpenDir_Click(self, event):  # wxGlade: MyFrame.<event_handler>
-        print "Event handler 'btnOpenDir_Click' not implemented!"
-        event.Skip()
+        self.listboxFiles_DoubleClick(event)
 
     def btnNewDir_Click(self, event):  # wxGlade: MyFrame.<event_handler>
-        print "Event handler 'btnNewDir_Click' not implemented!"
-        event.Skip()
+        # os.chdir(GetCurrentDir())
 
-    def btnDelDir_Click(self, event):  # wxGlade: MyFrame.<event_handler>
-        print "Event handler 'btnDelDir_Click' not implemented!"
-        event.Skip()
+        dir_name = wx.TextEntryDialog(None,'Enter directory name','Name','')
+
+        if dir_name.ShowModal() == wx.ID_CANCEL:
+            return
+
+        CreateNewDir(dir_name.GetValue())
+
+        self.listboxFiles.Clear()
+
+        self.listboxFiles.Append('<--')
+
+        self.showFiles()
+
+    def btnDel_Click(self, event):  # wxGlade: MyFrame.<event_handler>
+        item = self.listboxFiles.GetStringSelection()
+
+        if item.find('.') != -1:
+            deleteFile(item)
+        else:
+            deleteDir(item)
+
+        self.listboxFiles.Clear()
+
+        self.showFiles()
 
     def btnProperties_Click(self, event):  # wxGlade: MyFrame.<event_handler>
         print "Event handler 'btnProperties_Click' not implemented!"
@@ -151,6 +250,19 @@ class MyFrame(wx.Frame):
 		print "TODO: Assign Properties"
 	dlg.Destroy()
         event.Skip()
+
+    def showFiles(self):
+        data = listFiles()
+
+        for x in data:
+            self.listboxFiles.Append(x)
+
+    def updatePath(self, currDir):
+        # filename = self.listboxFiles.GetStringSelection()
+        # path = str(ShowPath(filename))
+        self.txtPath.Clear()
+        # path = ''.join(self.fullPath)
+        self.txtPath.WriteText(currDir)
 
 # end of class MyFrame
 

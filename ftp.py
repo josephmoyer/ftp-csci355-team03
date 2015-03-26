@@ -1,7 +1,7 @@
 #!/bin/python
 from ftplib import FTP
-import os.path
-ftp = ''
+import os, os.path
+global ftp
 def callback(data):
 	print data
 	print
@@ -12,22 +12,52 @@ def login(addr, usr, pwd):
 		return True
 	else:
 		return False
+
+# Easy login to skip entering data
+# def login():
+# 	global ftp
+# 	ftp = FTP('ftp.drwestfall.net')
+
+# 	ftp.login('ftp03', 'student')
+
 def listFiles():
-	ftp.retrlines('LIST') 	# Lists the contents of the directory
-def getFile(filename):
-	ftp.retrlines('RETR '+filename, callback) 	#returns the contents of the file. 
+    global ftp
+    # ftp.retrlines('LIST')     # Lists the contents of the directory
+    print ftp.pwd()
+    data = []
+    data = ftp.nlst()
+    return data
+def getFile(path):
+	direc, filename = os.path.split(path)
+	os.chdir(direc)
+	fhandle = open(filename, 'wb')
+	ftp.retrbinary("RETR " + filename, fhandle.write)
+	fhandle.close()
+
+	# ftp.retrlines('RETR '+filename, callback) 	#returns the contents of the file. 
 def upFile(filename):
 	direc, f = os.path.split(filename)
 	os.chdir(direc)  #changes to the directory of the file
 	ftp.storlines('STOR '+f, open(f)) 	 # uploads the file to the server
 def deleteFile(filename):
 	ftp.delete(filename)
-def changeDir(direc):
-	ftp.cwd(direc)
-def deleteDir(direc):
-	ftp.rmd(direc)
-def newDir(direc):
-	ftp.mkd(direc)
+def GetCurrentDir():
+    # print ftp.pwd()
+    return ftp.pwd()
+def SetCurrentDir(nameOfDir):
+    # print "Setting curr dir"
+    ftp.cwd(nameOfDir)
+def CreateNewDir(name):
+	ftp.dir()
+	# os.chdir(GetCurrentDir())
+	ftp.mkd(name)
+def deleteFile(fileName):
+    ftp.delete(fileName)
+def deleteDir(dirName):
+    ftp.rmd(dirName)
+# def ShowPath(filename):
+# 	print os.path.realpath(filename)
+# 	return os.path.realpath(filename)
 def quit():
 	ftp.quit()
 
