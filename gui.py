@@ -13,6 +13,7 @@ import gettext
 # begin wxGlade: extracode
 # end wxGlade
 import os
+import stat
 # from self.ftp import login,quit,getFile,upFile,listFiles,GetCurrentDir,SetCurrentDir,deleteFile,deleteDir,CreateNewDir
 from ftplib import FTP
 # ShowPath
@@ -25,6 +26,7 @@ class MyFrame(wx.Frame):
     totSize = 0
     ftp = ''
 
+# Login
     def login(self, addr, usr, pwd):
         # global ftp
         self.ftp = FTP(addr)
@@ -33,6 +35,8 @@ class MyFrame(wx.Frame):
         else:
             return False
 
+
+# List Files
     def listFiles(self):
         # global self.ftp
         # self.ftp.retrlines('LIST')     # Lists the contents of the directory
@@ -40,50 +44,75 @@ class MyFrame(wx.Frame):
         data = []
         data = self.ftp.nlst()
         return data
+
+# Get Files 
     def getFile(self, path):
         direc, filename = os.path.split(path)
         os.chdir(direc)
-        print self.GetCurrentDir()
+        print direc
         fhandle = open(filename, 'wb')
         self.ftp.retrbinary("RETR " + filename, fhandle.write)
         fhandle.close()
 
-        self.ftp.retrbinary('RETR '+filename, progress, 8192)   #returns the contents of the file.
-        self.sizeWritten = 0
+        # self.ftp.retrbinary('RETR '+filename, progress, 8192)   #returns the contents of the file.
+        # self.sizeWritten = 0
 
-        # self.ftp.retrlines('RETR '+filename, callback)     #returns the contents of the file. 
+
+# Up File
     def upFile(self, filename):
         direc, f = os.path.split(filename)
         os.chdir(direc)  #changes to the directory of the file
         self.totSize = os.path.getsize(f)
-        self.ftp.storbinary('STOR '+f, open(f,'rb'), 8192, self.progress)    # uploads the file to the server
+        self.ftp.storlines('STOR '+f, open(f))    # uploads the file to the server
+        # self.ftp.storbinary('STOR '+f, open(f,'rb'), 8192, self.progress)    # uploads the file to the server
         #f.close()
         self.sizeWritten = 0
         self.totSize = 0
         print 'Done uploading'
+
+# Delete Files 
     def deleteFile(self, filename):
         self.ftp.delete(filename)
+
+# Get Current File 
     def GetCurrentDir(self):
         # print self.ftp.pwd()
         return self.ftp.pwd()
+
+# Set Current Directory
     def SetCurrentDir(self, nameOfDir):
         # print "Setting curr dir"
         # print nameOfDir
         self.ftp.cwd(nameOfDir)
+
+# Create New Directory 
     def CreateNewDir(self, name):
         self.ftp.dir()
         # os.chdir(GetCurrentDir())
         self.ftp.mkd(name)
+
+# Delete File 
     def deleteFile(self, fileName):
         self.ftp.delete(fileName)
+
+# Delete Directory 
     def deleteDir(self, dirName):
         self.ftp.rmd(dirName)
-    # def ShowPath(filename):
-    #   print os.path.realpath(filename)
-    #   return os.path.realpath(filename)
+
+# Set Permissions 
+    def setMode(self, mode,filename):
+        self.ftp.sendcmd('SITE CHMOD ' + str(mode) + ' ' + filename)
+        print "Permissions have been set"
+        self.seePerm(filename)
+
+    def seePerm(self, filename):
+        self.ftp.sendcmd('SITE ls -l ' + filename)
+# Quit
     def quit(self):
         self.ftp.quit()
 
+
+# Def Init
     def __init__(self, *args, **kwds):
         # begin wxGlade: MyFrame.__init__
         kwds["style"] = wx.DEFAULT_FRAME_STYLE
@@ -124,6 +153,7 @@ class MyFrame(wx.Frame):
         # login()
         # self.showFiles()
 
+# Set Properties
     def __set_properties(self):
         # begin wxGlade: MyFrame.__set_properties
         self.SetTitle(_("self.ftp Client"))
@@ -146,6 +176,7 @@ class MyFrame(wx.Frame):
         self.gauge_1.SetMinSize((600, 15))
         # end wxGlade
 
+# Do Layout
     def __do_layout(self):
         # begin wxGlade: MyFrame.__do_layout
         sizer_1 = wx.BoxSizer(wx.VERTICAL)
@@ -181,10 +212,8 @@ class MyFrame(wx.Frame):
         self.Layout()
         # end wxGlade
 
-    # def txtHostAddress_Changed(self, event):  # wxGlade: MyFrame.<event_handler>
-    #     print "Event handler 'txtHostAddress_Changed' not implemented!"
-    #     event.Skip()
 
+# Button Connect Click
     def btnConnect_Click(self, event):  # wxGlade: MyFrame.<event_handler>
         # event.Skip()
         address = self.txtHostAddress.GetLineText(0)
@@ -211,13 +240,15 @@ class MyFrame(wx.Frame):
             self.showFiles()
             self.updatePath('/')
 
+
+# Button Double Click
     def listboxFiles_DoubleClick(self, event):  # wxGlade: MyFrame.<event_handler>
         # global fullPath
         print "Entered view dir"
 
         try:        
             if self.listboxFiles.GetStringSelection() == '<--':
-                SetCurrentDir('..')
+                self.SetCurrentDir('..')
                 # self.fullPath.pop()
                 currDir = self.GetCurrentDir()
                 self.updatePath(currDir)
@@ -229,7 +260,7 @@ class MyFrame(wx.Frame):
                 # self.fullPath.append(currDir)
                 self.updatePath(currDir)
         except:
-            print "Unexpected error:", sys.exc_info()[0]
+            print "Unexpected error:"
             raise
 
         
@@ -246,10 +277,7 @@ class MyFrame(wx.Frame):
 
 
 
-    # def listboxFiles_Click(self, event):  # wxGlade: MyFrame.<event_handler>
-    #     print "Event handler 'listboxFiles_Click' not implemented!"
-    #     event.Skip()
-
+# Upload Click
     def btnUpload_Click(self, event):  # wxGlade: MyFrame.<event_handler>
         filename = ''
         dlg = wx.FileDialog(self, message="Choose a file")
@@ -263,6 +291,8 @@ class MyFrame(wx.Frame):
         self.showFiles()
         # event.Skip()
 
+
+# Download Click
     def btnDownload_Click(self, event):  # wxGlade: MyFrame.<event_handler>
         filename = self.listboxFiles.GetStringSelection()
 
@@ -279,9 +309,13 @@ class MyFrame(wx.Frame):
 
         self.getFile(path)
 
+
+# Directory Button Click
     def btnOpenDir_Click(self, event):  # wxGlade: MyFrame.<event_handler>
         self.listboxFiles_DoubleClick(event)
 
+
+# New Directory Button Click
     def btnNewDir_Click(self, event):  # wxGlade: MyFrame.<event_handler>
         # os.chdir(GetCurrentDir())
 
@@ -298,6 +332,8 @@ class MyFrame(wx.Frame):
 
         self.showFiles()
 
+
+# Delete Button Click
     def btnDel_Click(self, event):  # wxGlade: MyFrame.<event_handler>
         item = self.listboxFiles.GetStringSelection()
 
@@ -310,20 +346,37 @@ class MyFrame(wx.Frame):
 
         self.showFiles()
 
-    def btnProperties_Click(self, event):  # wxGlade: MyFrame.<event_handler>
-        print "Event handler 'btnProperties_Click' not implemented!"
-        dlg = MyDialog(self)
-        if dlg.ShowModal() == wx.ID_OK:
-            print "TODO: Assign Properties"
-        dlg.Destroy()
-        event.Skip()
 
+
+    def btnProperties_Click(self, event):  # wxGlade: MyFrame.<event_handler>
+        dlg = MyDialog(self)
+
+        if dlg.ShowModal() == wx.ID_OK:
+            mode = 0
+            filename = self.GetCurrentDir() + self.listboxFiles.GetStringSelection()
+            print filename #DEBUG
+        
+            if(dlg.chkOwnRead.GetValue()): mode += 400
+            if(dlg.chkOwnWrite.GetValue()): mode += 200
+            if(dlg.chkOwnExe.GetValue()): mode += 100
+            if(dlg.chkGrpRead.GetValue()): mode += 40
+            if(dlg.chkGrpWrite.GetValue()): mode += 20
+            if(dlg.chkGrpExe.GetValue()): mode += 10
+            if(dlg.chkPubRead.GetValue()): mode += 4
+            if(dlg.chkPubWrite.GetValue()): mode += 2
+            if(dlg.chkPubExe.GetValue()): mode += 1
+            self.setMode(mode,filename)
+        dlg.Destroy()
+
+# Show Files
     def showFiles(self):
         data = self.listFiles()
 
         for x in data:
             self.listboxFiles.Append(x)
 
+
+# Update Path
     def updatePath(self, currDir):
         # filename = self.listboxFiles.GetStringSelection()
         # path = str(ShowPath(filename))
@@ -331,8 +384,10 @@ class MyFrame(wx.Frame):
         # path = ''.join(self.fullPath)
         self.txtPath.WriteText(currDir)
 
+
 # end of class MyFrame
 
+# MyDialog Class
 class MyDialog(wx.Dialog):
     def __init__(self, *args, **kwds):
         # begin wxGlade: MyDialog.__init__
@@ -395,7 +450,10 @@ class MyDialog(wx.Dialog):
         self.EndModal(wx.ID_OK)
         event.Skip()
 
+
 # end of class MyDialog
+
+# MyApp Class
 class MyApp(wx.App):
     def OnInit(self):
         wx.InitAllImageHandlers()
@@ -406,6 +464,7 @@ class MyApp(wx.App):
 
 # end of class MyApp
 
+# Main
 if __name__ == "__main__":
     gettext.install("FTP_Client") # replace with the appropriate catalog name
 
