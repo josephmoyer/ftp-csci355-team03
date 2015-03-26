@@ -46,6 +46,7 @@ def GetCurrentDir():
     return ftp.pwd()
 def SetCurrentDir(nameOfDir):
     # print "Setting curr dir"
+    # print nameOfDir
     ftp.cwd(nameOfDir)
 def CreateNewDir(name):
 	ftp.dir()
