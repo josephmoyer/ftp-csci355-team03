@@ -11,7 +11,7 @@ def callback(data):
 def progress(data):
     global sizeWritten
     sizeWritten += 8192
-    print (str(round(sizeWritten / 1024. / 1024.,5)) + 'Mb / '+ (str(round(totSize / 1024. / 1024.,5)) + 'Mb'))
+    print (str(round(sizeWritten / 1024. / 1024.,4)) + 'Mb / '+ (str(round(totSize / 1024. / 1024.,4)) + 'Mb'))
     
 def login(addr, usr, pwd):
 	global ftp
