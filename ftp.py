@@ -58,6 +58,8 @@ def deleteDir(dirName):
 # def ShowPath(filename):
 # 	print os.path.realpath(filename)
 # 	return os.path.realpath(filename)
+def setMode(mode,filename):
+    ftp.sendcmd('SITE CHMOD ' + str(mode) + ' ' + filename)
 def quit():
 	ftp.quit()
 

@@ -13,7 +13,7 @@ import gettext
 # begin wxGlade: extracode
 # end wxGlade
 import os
-from ftp import login,quit,getFile,upFile,listFiles,GetCurrentDir,SetCurrentDir,deleteFile,deleteDir,CreateNewDir
+from ftp import login,quit,getFile,upFile,listFiles,GetCurrentDir,SetCurrentDir,deleteFile,deleteDir,CreateNewDir,setMode
 
 # ShowPath
 
@@ -244,10 +244,21 @@ class MyFrame(wx.Frame):
         self.showFiles()
 
     def btnProperties_Click(self, event):  # wxGlade: MyFrame.<event_handler>
-        print "Event handler 'btnProperties_Click' not implemented!"
 	dlg = MyDialog(self)
 	if dlg.ShowModal() == wx.ID_OK:
-		print "TODO: Assign Properties"
+		mode = 0
+		filename = GetCurrentDir() + self.listboxFiles.GetStringSelection()
+		print filename #DEBUG
+		if(dlg.chkOwnRead.GetValue()): mode += 400
+		if(dlg.chkOwnWrite.GetValue()): mode += 200
+		if(dlg.chkOwnExe.GetValue()): mode += 100
+		if(dlg.chkGrpRead.GetValue()): mode += 40
+		if(dlg.chkGrpWrite.GetValue()): mode += 20
+		if(dlg.chkGrpExe.GetValue()): mode += 10
+		if(dlg.chkPubRead.GetValue()): mode += 4
+		if(dlg.chkPubWrite.GetValue()): mode += 2
+		if(dlg.chkPubExe.GetValue()): mode += 1
+		setMode(mode,filename)
 	dlg.Destroy()
         event.Skip()
 
@@ -324,9 +335,20 @@ class MyDialog(wx.Dialog):
         # end wxGlade
 
     def btnPropOK_Click(self, event):  # wxGlade: MyDialog.<event_handler>
-        print "Event handler 'btnPropOK_Click' not implemented!"
+	"""mode = 0
+	filename = GetCurrentDir() + self.listboxFiles.GetStringSelection()
+	print filename #DEBUG
+	if(self.chkOwnRead.GetValue(self)): mode += 400
+	if(self.chkOwnWrite.GetValue(self)): mode += 200
+	if(self.chkOwnExec.GetValue(self)): mode += 100
+	if(self.chkGrpRead.GetValue(self)): mode += 40
+	if(self.chkGrpWrite.GetValue(self)): mode += 20
+	if(self.chkGrpExec.GetValue(self)): mode += 10
+	if(self.chkPubRead.GetValue(self)): mode += 4
+	if(self.chkPubWrite.GetValue(self)): mode += 2
+	if(self.chkPubExec.GetValue(self)): mode += 1
+	setMode(mode,filename) """
 	self.EndModal(wx.ID_OK)
-        event.Skip()
 
 # end of class MyDialog
 class MyApp(wx.App):
