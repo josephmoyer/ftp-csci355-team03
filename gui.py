@@ -5,7 +5,7 @@
 #
 
 import wx
-
+import time
 # begin wxGlade: dependencies
 import gettext
 # end wxGlade
@@ -16,7 +16,51 @@ import os
 import stat
 # from self.ftp import login,quit,getFile,upFile,listFiles,GetCurrentDir,SetCurrentDir,deleteFile,deleteDir,CreateNewDir
 from ftplib import FTP
+from threading import Thread
 # ShowPath
+
+from wx.lib.pubsub import Publisher
+
+class TestThread(Thread):
+    """Test Worker Thread Class."""
+ 
+    #----------------------------------------------------------------------
+    def __init__(self):
+        """Init Worker Thread Class."""
+        Thread.__init__(self)
+        self.start()    # start the thread
+ 
+    #----------------------------------------------------------------------
+    def run(self):
+        """Run Worker Thread."""
+        # This is the code executing in the new thread.
+        for i in range(20):
+            time.sleep(1)
+            wx.CallAfter(Publisher().sendMessage, "update", msg="")
+
+class MyProgressDialog(wx.Dialog): 
+    #----------------------------------------------------------------------
+    def __init__(self):
+        """Constructor"""
+        wx.Dialog.__init__(self, None, title="Progress")
+        self.count = 0
+ 
+        self.progress = wx.Gauge(self, range=20)
+ 
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.progress, 0, wx.EXPAND)
+        self.SetSizer(sizer)
+ 
+        # create a pubsub listener
+        Publisher().subscribe(self.updateProgress, "update")
+
+    def updateProgress(self, msg):
+        self.count += 1
+
+        if self.count >= 20:
+            self.Destroy()
+
+        self.progress.SetValue(self.count)
 
 class MyFrame(wx.Frame):
     address = ''
@@ -59,16 +103,26 @@ class MyFrame(wx.Frame):
 
 
 # Up File
-    def upFile(self, filename):
+    def upFile(self, event, filename):
         direc, f = os.path.split(filename)
         os.chdir(direc)  #changes to the directory of the file
         self.totSize = os.path.getsize(f)
-        self.ftp.storlines('STOR '+f, open(f))    # uploads the file to the server
-        # self.ftp.storbinary('STOR '+f, open(f,'rb'), 8192, self.progress)    # uploads the file to the server
+        # self.ftp.storlines('STOR '+f, open(f))    # uploads the file to the server
+        
+        btn = event.GetEventObject()
+        btn.Disable()
+
+        TestThread()
+        dlg = MyProgressDialog()
+        dlg.ShowModal()
+
+        self.ftp.storbinary('STOR '+f, open(f,'rb'), 8192, self.progress)    # uploads the file to the server
         #f.close()
         self.sizeWritten = 0
         self.totSize = 0
         print 'Done uploading'
+
+        btn.Enable()
 
 # Delete Files 
     def deleteFile(self, filename):
@@ -103,13 +157,20 @@ class MyFrame(wx.Frame):
     def setMode(self, mode,filename):
         self.ftp.sendcmd('SITE CHMOD ' + str(mode) + ' ' + filename)
         print "Permissions have been set"
-        self.seePerm(filename)
+        # self.seePerm(filename)
 
-    def seePerm(self, filename):
-        self.ftp.sendcmd('SITE ls -l ' + filename)
+    # def seePerm(self, filename):
+    #     self.ftp.sendcmd('SITE ls -l ' + filename)
+
+    def progress(self, data):
+        self.sizeWritten += 8192
+        # self.label_2.SetLabel(str(round(self.sizeWritten / 1024. / 1024.,4)) + 'Mb / '+ (str(round(self.totSize / 1024. / 1024.,4)) + 'Mb'))
+        print (str(round(self.sizeWritten / 1024. / 1024.,4)) + 'Mb / '+ (str(round(self.totSize / 1024. / 1024.,4)) + 'Mb'))
 # Quit
     def quit(self):
         self.ftp.quit()
+
+
 
 
 # Def Init
@@ -132,7 +193,7 @@ class MyFrame(wx.Frame):
         self.btnDel = wx.Button(self, wx.ID_ANY, _("Delete"))
         self.static_line_3 = wx.StaticLine(self, wx.ID_ANY)
         self.btnProperties = wx.Button(self, wx.ID_ANY, _("Properties..."))
-        self.gauge_1 = wx.Gauge(self, wx.ID_ANY, 10)
+        self.gauge_1 = wx.Gauge(self, wx.ID_ANY, range=100)
 
         self.__set_properties()
         self.__do_layout()
@@ -148,6 +209,8 @@ class MyFrame(wx.Frame):
         self.Bind(wx.EVT_BUTTON, self.btnDel_Click, self.btnDel)
         self.Bind(wx.EVT_BUTTON, self.btnProperties_Click, self.btnProperties)
         # end wxGlade
+
+
 
         # Used in conjunction with the easy login
         # login()
@@ -286,7 +349,7 @@ class MyFrame(wx.Frame):
         dlg.Destroy()
         if not filename:
            return
-        self.upFile(filename)
+        self.upFile(event, filename)
         self.listboxFiles.Clear()
         self.showFiles()
         # event.Skip()
