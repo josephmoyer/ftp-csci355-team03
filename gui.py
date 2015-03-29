@@ -187,6 +187,7 @@ class MyFrame(wx.Frame):
         self.btnDel = wx.Button(self, wx.ID_ANY, _("Delete"))
         self.static_line_3 = wx.StaticLine(self, wx.ID_ANY)
         self.btnProperties = wx.Button(self, wx.ID_ANY, _("Properties..."))
+        self.btnExit = wx.Button(self, wx.ID_ANY, _("Exit"))
         self.gauge_1 = wx.Gauge(self, wx.ID_ANY, range=100)
 
         self.__set_properties()
@@ -202,6 +203,7 @@ class MyFrame(wx.Frame):
         self.Bind(wx.EVT_BUTTON, self.btnNewDir_Click, self.btnNewDir)
         self.Bind(wx.EVT_BUTTON, self.btnDel_Click, self.btnDel)
         self.Bind(wx.EVT_BUTTON, self.btnProperties_Click, self.btnProperties)
+        self.Bind(wx.EVT_BUTTON, self.btnExit_Click, self.btnExit)
         # end wxGlade
 
 
@@ -213,7 +215,7 @@ class MyFrame(wx.Frame):
 # Set Properties
     def __set_properties(self):
         # begin wxGlade: MyFrame.__set_properties
-        self.SetTitle(_("self.ftp Client"))
+        self.SetTitle(_("Team 3 FTP Client"))
         self.SetSize((600, 300))
         self.label_3.SetMinSize((100, 17))
         self.txtHostAddress.SetMinSize((400, 27))
@@ -230,6 +232,7 @@ class MyFrame(wx.Frame):
         self.btnDel.SetMinSize((150, 29))
         self.static_line_3.SetMinSize((148, 5))
         self.btnProperties.SetMinSize((150, 29))
+        self.btnExit.SetMinSize((150, 29))
         self.gauge_1.SetMinSize((600, 15))
         # end wxGlade
 
@@ -261,6 +264,7 @@ class MyFrame(wx.Frame):
         sizer_9.Add(self.btnDel, 0, 0, 0)
         sizer_9.Add(self.static_line_3, 0, wx.EXPAND, 0)
         sizer_9.Add(self.btnProperties, 0, 0, 0)
+        sizer_9.Add(self.btnExit, 0, 0, 0)
         sizer_6.Add(sizer_9, 1, wx.EXPAND, 0)
         sizer_3.Add(sizer_6, 1, wx.EXPAND, 0)
         sizer_1.Add(sizer_3, 8, wx.EXPAND, 0)
@@ -317,7 +321,7 @@ class MyFrame(wx.Frame):
                 # self.fullPath.append(currDir)
                 self.updatePath(currDir)
         except:
-            print "Unexpected error:"
+            wx.MessageBox(self.listboxFiles.GetStringSelection() + ' is not a directory.')
             raise
 
         
@@ -345,8 +349,13 @@ class MyFrame(wx.Frame):
            return
         self.upFile(event, filename)
         self.listboxFiles.Clear()
+
+
+        if self.GetCurrentDir() != '/':
+            self.listboxFiles.Append('<--')
+
         self.showFiles()
-        # event.Skip()
+        
 
 
 # Download Click
@@ -399,6 +408,9 @@ class MyFrame(wx.Frame):
 
         self.listboxFiles.Clear()
 
+        if self.GetCurrentDir() != '/':
+            self.listboxFiles.Append('<--')
+        
         self.showFiles()
 
 
@@ -440,6 +452,8 @@ class MyFrame(wx.Frame):
         self.txtPath.WriteText(currDir)
 
 
+    def btnExit_Click(self, event):
+        FTP_Client.Exit()
 # end of class MyFrame
 
 # MyDialog Class
