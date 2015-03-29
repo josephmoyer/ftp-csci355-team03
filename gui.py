@@ -15,6 +15,7 @@ import gettext
 import os
 import stat
 # from self.ftp import login,quit,getFile,upFile,listFiles,GetCurrentDir,SetCurrentDir,deleteFile,deleteDir,CreateNewDir
+import ftplib
 from ftplib import FTP
 from threading import Thread
 # ShowPath
@@ -33,10 +34,13 @@ class MyFrame(wx.Frame):
     def login(self, addr, usr, pwd):
         # global ftp
         self.ftp = FTP(addr)
-        if '230' in self.ftp.login(user=usr, passwd=pwd):    # login into the ftp site with the correct credentials
-            return True
-        else:
-            return False
+        try:
+            self.ftp.login(user=usr, passwd=pwd)
+        except ftplib.all_errors, e:
+		    error = str(e).split(None,1)
+		    if '530' in error:
+		        return False
+        return True
 
 
 # List Files
