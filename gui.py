@@ -50,16 +50,36 @@ class MyFrame(wx.Frame):
 
 # Get Files 
     def getFile(self, path):
-        direc, filename = os.path.split(path)
-        os.chdir(direc)
-        print direc
-        fhandle = open(filename, 'wb')
-        self.ftp.retrbinary("RETR " + filename, fhandle.write)
-        fhandle.close()
+        self.sizeWritten = 0
+        self.totSize = 0
+        self.percent = 0
 
-        # self.ftp.retrbinary('RETR '+filename, progress, 8192)   #returns the contents of the file.
-        # self.sizeWritten = 0
+        print path
+        localDirec, f = os.path.split(path)
 
+        self.totSize = self.getFileSize(f)
+        os.chdir(localDirec)
+
+        with open(f, 'wb') as fhandle:
+            def callback(chunk):
+                fhandle.write(chunk)
+                self.sizeWritten += 8192
+
+                self.percent = int(100 * float(self.sizeWritten)/float(self.totSize))
+                wx.Yield()
+                self.gauge_1.SetValue(self.percent)
+            self.ftp.retrbinary('RETR ' + f, callback, 8192)
+
+
+        # fhandle = open(filename, 'wb')
+        # self.ftp.retrbinary('RETR ' + f, open(f, 'wb').write, 8192, self.downProgress)
+        # fhandle.close()
+        # f.close()
+
+
+
+        self.gauge_1.SetValue(0)
+        print 'Done downloading'
 
 # Up File
     def upFile(self, event, filename):
@@ -70,11 +90,12 @@ class MyFrame(wx.Frame):
         direc, f = os.path.split(filename)
         os.chdir(direc)  #changes to the directory of the file
         self.totSize = os.path.getsize(f)
-        self.currentSize = self.totSize
+
         # self.ftp.storlines('STOR '+f, open(f))    # uploads the file to the server
 
         self.ftp.storbinary('STOR '+f, open(f,'rb'), 8192, self.fileProgress)    # uploads the file to the server
-        #f.close()
+        # f.close()
+        time.sleep(2)
         self.gauge_1.SetValue(0)
         print 'Done uploading'
 
@@ -131,6 +152,10 @@ class MyFrame(wx.Frame):
         self.gauge_1.SetValue(self.percent)
 
         print 'File Progress'
+
+    def getFileSize(self, filename):
+        self.ftp.sendcmd("TYPE i")
+        return self.ftp.size(filename)
 # Quit
     def quit(self):
         self.ftp.quit()
@@ -332,8 +357,6 @@ class MyFrame(wx.Frame):
             return
 
         path = save_dlg.GetPath()
-
-        print path
 
         self.getFile(path)
 
