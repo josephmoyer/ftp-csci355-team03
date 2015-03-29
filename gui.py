@@ -36,7 +36,7 @@ class TestThread(Thread):
         # This is the code executing in the new thread.
         for i in range(20):
             time.sleep(1)
-            wx.CallAfter(Publisher().sendMessage, "update", msg="")
+            wx.CallAfter(Publisher().sendMessage, "update", "")
 
 class MyProgressDialog(wx.Dialog): 
     #----------------------------------------------------------------------
@@ -116,7 +116,7 @@ class MyFrame(wx.Frame):
         dlg = MyProgressDialog()
         dlg.ShowModal()
 
-        self.ftp.storbinary('STOR '+f, open(f,'rb'), 8192, self.progress)    # uploads the file to the server
+        self.ftp.storbinary('STOR '+f, open(f,'rb'), 8192, self.fileProgress)    # uploads the file to the server
         #f.close()
         self.sizeWritten = 0
         self.totSize = 0
@@ -162,7 +162,7 @@ class MyFrame(wx.Frame):
     # def seePerm(self, filename):
     #     self.ftp.sendcmd('SITE ls -l ' + filename)
 
-    def progress(self, data):
+    def fileProgress(self, data):
         self.sizeWritten += 8192
         # self.label_2.SetLabel(str(round(self.sizeWritten / 1024. / 1024.,4)) + 'Mb / '+ (str(round(self.totSize / 1024. / 1024.,4)) + 'Mb'))
         print (str(round(self.sizeWritten / 1024. / 1024.,4)) + 'Mb / '+ (str(round(self.totSize / 1024. / 1024.,4)) + 'Mb'))
