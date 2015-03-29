@@ -21,47 +21,6 @@ from threading import Thread
 
 from wx.lib.pubsub import Publisher
 
-class TestThread(Thread):
-    """Test Worker Thread Class."""
- 
-    #----------------------------------------------------------------------
-    def __init__(self):
-        """Init Worker Thread Class."""
-        Thread.__init__(self)
-        self.start()    # start the thread
- 
-    #----------------------------------------------------------------------
-    def run(self):
-        """Run Worker Thread."""
-        # This is the code executing in the new thread.
-        for i in range(20):
-            time.sleep(1)
-            wx.CallAfter(Publisher().sendMessage, "update", "")
-
-class MyProgressDialog(wx.Dialog): 
-    #----------------------------------------------------------------------
-    def __init__(self):
-        """Constructor"""
-        wx.Dialog.__init__(self, None, title="Progress")
-        self.count = 0
- 
-        self.progress = wx.Gauge(self, range=20)
- 
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.progress, 0, wx.EXPAND)
-        self.SetSizer(sizer)
- 
-        # create a pubsub listener
-        Publisher().subscribe(self.updateProgress, "update")
-
-    def updateProgress(self, msg):
-        self.count += 1
-
-        if self.count >= 20:
-            self.Destroy()
-
-        self.progress.SetValue(self.count)
-
 class MyFrame(wx.Frame):
     address = ''
     user = ''
@@ -104,25 +63,20 @@ class MyFrame(wx.Frame):
 
 # Up File
     def upFile(self, event, filename):
+        self.sizeWritten = 0
+        self.totSize = 0
+        self.percent = 0
+
         direc, f = os.path.split(filename)
         os.chdir(direc)  #changes to the directory of the file
         self.totSize = os.path.getsize(f)
+        self.currentSize = self.totSize
         # self.ftp.storlines('STOR '+f, open(f))    # uploads the file to the server
-        
-        btn = event.GetEventObject()
-        btn.Disable()
-
-        TestThread()
-        dlg = MyProgressDialog()
-        dlg.ShowModal()
 
         self.ftp.storbinary('STOR '+f, open(f,'rb'), 8192, self.fileProgress)    # uploads the file to the server
         #f.close()
-        self.sizeWritten = 0
-        self.totSize = 0
+        self.gauge_1.SetValue(0)
         print 'Done uploading'
-
-        btn.Enable()
 
 # Delete Files 
     def deleteFile(self, filename):
@@ -164,8 +118,19 @@ class MyFrame(wx.Frame):
 
     def fileProgress(self, data):
         self.sizeWritten += 8192
-        # self.label_2.SetLabel(str(round(self.sizeWritten / 1024. / 1024.,4)) + 'Mb / '+ (str(round(self.totSize / 1024. / 1024.,4)) + 'Mb'))
-        print (str(round(self.sizeWritten / 1024. / 1024.,4)) + 'Mb / '+ (str(round(self.totSize / 1024. / 1024.,4)) + 'Mb'))
+        print self.sizeWritten
+        print self.totSize
+        # # self.label_2.SetLabel(str(round(self.sizeWritten / 1024. / 1024.,4)) + 'Mb / '+ (str(round(self.totSize / 1024. / 1024.,4)) + 'Mb'))
+        # print (str(round(self.sizeWritten / 1024. / 1024.,4)) + 'Mb / '+ (str(round(self.totSize / 1024. / 1024.,4)) + 'Mb'))
+        # self.currentSize = self.totSize - self.sizeWritten
+        self.percent = int(100 * float(self.sizeWritten)/float(self.totSize))
+
+        print self.percent
+
+        wx.Yield()
+        self.gauge_1.SetValue(self.percent)
+
+        print 'File Progress'
 # Quit
     def quit(self):
         self.ftp.quit()
