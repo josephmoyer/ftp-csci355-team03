@@ -29,6 +29,7 @@ class MyFrame(wx.Frame):
     sizeWritten = 0
     totSize = 0
     ftp = ''
+    homeDir = ''
 
 # Login
     def login(self, addr, usr, pwd):
@@ -36,12 +37,12 @@ class MyFrame(wx.Frame):
         self.ftp = FTP(addr)
         try:
             self.ftp.login(user=usr, passwd=pwd)
+            self.getDirList()
         except ftplib.all_errors, e:
 		    error = str(e).split(None,1)
 		    if '530' in error:
 		        return False
         return True
-
 
 # List Files
     def listFiles(self):
@@ -160,6 +161,24 @@ class MyFrame(wx.Frame):
     def getFileSize(self, filename):
         self.ftp.sendcmd("TYPE i")
         return self.ftp.size(filename)
+
+    def getDirList(self):
+        currentDir = os.getcwd()
+        os.chdir(self.homeDir)
+        dirFile = open('dirlist.txt', 'a')
+
+        dirFile.seek(0)
+        dirFile.truncate()
+
+        def callback(line):
+            dirFile.write(line)
+            dirFile.write('\n')
+
+        self.ftp.dir(callback)
+
+        dirFile.close()
+        os.chdir(currentDir)
+        
 # Quit
     def quit(self):
         self.ftp.quit()
@@ -206,6 +225,7 @@ class MyFrame(wx.Frame):
         self.Bind(wx.EVT_BUTTON, self.btnExit_Click, self.btnExit)
         # end wxGlade
 
+        self.homeDir = os.getcwd()
 
 
         # Used in conjunction with the easy login
@@ -215,7 +235,7 @@ class MyFrame(wx.Frame):
 # Set Properties
     def __set_properties(self):
         # begin wxGlade: MyFrame.__set_properties
-        self.SetTitle(_("Team 3 FTP Client"))
+        self.SetTitle(_("Team 3 FTP Client - Build #832,530"))
         self.SetSize((600, 300))
         self.label_3.SetMinSize((100, 17))
         self.txtHostAddress.SetMinSize((400, 27))
@@ -416,12 +436,23 @@ class MyFrame(wx.Frame):
 
 
     def btnProperties_Click(self, event):  # wxGlade: MyFrame.<event_handler>
+        def checkProperties(filename):
+            propLine = self.getPropLine(filename)
+            print 'Printing prop line'
+            print propLine
+
         dlg = MyDialog(self)
+
+        filename = self.GetCurrentDir() + self.listboxFiles.GetStringSelection()
+        print filename #DEBUG
+
+        direc, f = os.path.split(filename)
+
+        checkProperties(f)
 
         if dlg.ShowModal() == wx.ID_OK:
             mode = 0
-            filename = self.GetCurrentDir() + self.listboxFiles.GetStringSelection()
-            print filename #DEBUG
+
         
             if(dlg.chkOwnRead.GetValue()): mode += 400
             if(dlg.chkOwnWrite.GetValue()): mode += 200
@@ -434,6 +465,40 @@ class MyFrame(wx.Frame):
             if(dlg.chkPubExe.GetValue()): mode += 1
             self.setMode(mode,filename)
         dlg.Destroy()
+
+
+
+    def getPropLine(self, filename):
+        foundLine = ''
+
+        currentDir = os.getcwd()
+        os.chdir(self.homeDir)
+
+
+        def check():
+            global foundLine
+            datafile = file('dirlist.txt')
+            found = False
+            for line in datafile:
+                if filename in line:
+                    found = True
+                    foundLine = line
+                    print line
+                    break
+
+        check()
+        # if True:
+        #     print "true"
+        #     print foundLine
+        # else:
+        #     print "false"
+
+        line = foundLine[:10]
+        print line
+
+        os.chdir(currentDir)
+
+        return line
 
 # Show Files
     def showFiles(self):
