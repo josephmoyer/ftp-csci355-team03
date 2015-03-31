@@ -6,7 +6,7 @@
 -rw-r--r--   1 ftp03    jwestfal     7040 Mar 31 18:50 grumpy.jpg
 -rw-r--r--   1 ftp03    jwestfal       22 Mar 20 01:11 guitest.txt
 drwxr-xr-x   3 ftp03    jwestfal     4096 Mar 29 22:00 newdir
-----------   1 ftp03    jwestfal       15 Mar 19 23:27 newuploadtest.txt
--rw-r--r--   1 ftp03    jwestfal       15 Mar 19 23:30 newuploadtest2.txt
--rw-r--r--   1 ftp03    jwestfal     2767 Mar 29 18:45 progress27.py
+-r-xr-xr-x   1 ftp03    jwestfal       15 Mar 19 23:27 newuploadtest.txt
+----------   1 ftp03    jwestfal       15 Mar 19 23:30 newuploadtest2.txt
+----------   1 ftp03    jwestfal     2767 Mar 29 18:45 progress27.py
 -rw-r--r--   1 ftp03    jwestfal       99 Mar 29 21:22 progressTest.py

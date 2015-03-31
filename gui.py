@@ -436,12 +436,28 @@ class MyFrame(wx.Frame):
 
 
     def btnProperties_Click(self, event):  # wxGlade: MyFrame.<event_handler>
+        dlg = MyDialog(self)
+
         def checkProperties(filename):
             propLine = self.getPropLine(filename)
             print 'Printing prop line'
             print propLine
 
-        dlg = MyDialog(self)
+            owner = propLine[:3]
+            group = propLine[3:6]
+            public = propLine[6:9]
+
+            if (owner[0] == 'r'): dlg.chkOwnRead.SetValue(True)
+            if (group[0] == 'r'): dlg.chkGrpRead.SetValue(True)
+            if (public[0] == 'r'): dlg.chkPubRead.SetValue(True)
+
+            if (owner[1] == 'w'): dlg.chkOwnWrite.SetValue(True)
+            if (group[1] == 'w'): dlg.chkGrpWrite.SetValue(True)
+            if (public[1] == 'w'): dlg.chkPubWrite.SetValue(True)
+
+            if (owner[2] == 'x'): dlg.chkOwnExe.SetValue(True)
+            if (group[2] == 'x'): dlg.chkGrpExe.SetValue(True)
+            if (public[2] == 'x'): dlg.chkPubExe.SetValue(True)
 
         filename = self.GetCurrentDir() + self.listboxFiles.GetStringSelection()
         print filename #DEBUG
@@ -475,26 +491,24 @@ class MyFrame(wx.Frame):
         os.chdir(self.homeDir)
 
 
-        def check():
-            global foundLine
-            datafile = file('dirlist.txt')
-            found = False
-            for line in datafile:
-                if filename in line:
-                    found = True
-                    foundLine = line
-                    print line
-                    break
+        datafile = file('dirlist.txt')
+        found = False
+        
+        for line in datafile:
+            if filename in line:
+                found = True
+                foundLine = line
+                # print line
+                break
 
-        check()
         # if True:
         #     print "true"
         #     print foundLine
         # else:
         #     print "false"
 
-        line = foundLine[:10]
-        print line
+        line = foundLine[1:10]
+        # print line
 
         os.chdir(currentDir)
 
