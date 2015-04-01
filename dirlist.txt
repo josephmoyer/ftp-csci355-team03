@@ -1,10 +1,2 @@
--rw-r--r--   1 ftp03    jwestfal 10485760 Mar 31 18:05 10mb.txt
--rw-r--r--   1 ftp03    jwestfal   547645 Mar 23 16:04 Screen Shot 2015-02-21 at 10.05.01 PM.png
--rw-r--r--   1 ftp03    jwestfal       32 Mar 25 00:08 Ulysses.txt
--rw-r--r--   1 ftp03    jwestfal      712 Mar 31 18:49 dirlist.txt
--rw-r--r--   1 ftp03    jwestfal     7040 Mar 31 18:50 grumpy.jpg
--rw-r--r--   1 ftp03    jwestfal       22 Mar 20 01:11 guitest.txt
--r-xr-xr-x   1 ftp03    jwestfal       15 Mar 19 23:27 newuploadtest.txt
-----------   1 ftp03    jwestfal       15 Mar 19 23:30 newuploadtest2.txt
-----------   1 ftp03    jwestfal     2767 Mar 29 18:45 progress27.py
--rw-r--r--   1 ftp03    jwestfal       99 Mar 29 21:22 progressTest.py
+-rwxrwxrwx   1 ftp03    jwestfal 10485760 Apr  1 19:42 10mb.txt
+-r--r--r--   1 ftp03    jwestfal     3362 Apr  1 19:44 listctrl.py

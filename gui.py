@@ -131,18 +131,22 @@ class MyFrame(wx.Frame):
 
 # Delete Directory 
     def deleteDir(self, dirName):
+        def cleanOut():
+            for d in self.ftp.nlst():
+                try:
+                    self.ftp.delete(d) # delete the file
+                except:
+                    self.ftp.cwd(d) # it's actually a directory; clean it
+                    print self.ftp.pwd()
+                    cleanOut()
+                    self.ftp.cwd('..')
+                    self.ftp.rmd(d)
+        
         # self.ftp.rmd(dirName)
         self.ftp.cwd(dirName)
         print 'cleanout ',self.ftp.pwd()
-    
-        for d in self.ftp.nlst():
-            try:
-                self.ftp.delete(d) # delete the file
-            except:
-                self.ftp.cwd(d) # it's actually a directory; clean it
-                cleanOut(ftp)
-                self.ftp.cwd('..')
-                self.ftp.rmd(d)
+        cleanOut()
+
 
         self.ftp.cwd('..')
         self.ftp.rmd(dirName)
