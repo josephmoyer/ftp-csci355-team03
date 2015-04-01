@@ -1,2 +1,0 @@
--rwxrwxrwx   1 ftp03    jwestfal 10485760 Apr  1 19:42 10mb.txt
--r--r--r--   1 ftp03    jwestfal     3362 Apr  1 19:44 listctrl.py

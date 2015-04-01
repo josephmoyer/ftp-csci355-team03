@@ -6,23 +6,18 @@
 
 import wx
 import time
-# begin wxGlade: dependencies
-import gettext
-# end wxGlade
 
-# begin wxGlade: extracode
-# end wxGlade
+import gettext
+
 import os
 import stat
-# from self.ftp import login,quit,getFile,upFile,listFiles,GetCurrentDir,SetCurrentDir,deleteFile,deleteDir,CreateNewDir
+
 import ftplib
 from ftplib import FTP
-from threading import Thread
-# ShowPath
 
-from wx.lib.pubsub import Publisher
 
 class MyFrame(wx.Frame):
+    # Variables for holding key information regarding the FTP connection
     address = ''
     user = ''
     pwd = ''
@@ -31,40 +26,40 @@ class MyFrame(wx.Frame):
     ftp = ''
     homeDir = ''
 
-# Login
+    # Login to server
     def login(self, addr, usr, pwd):
-        # global ftp
         self.ftp = FTP(addr)
+        
         try:
             self.ftp.login(user=usr, passwd=pwd)
             self.getDirList()
         except ftplib.all_errors, e:
-		    error = str(e).split(None,1)
-		    if '530' in error:
-		        return False
+            error = str(e).split(None,1)
+            
+            # Login credential error
+            if '530' in error:
+                return False
         return True
 
-# List Files
+    # List server files
     def listFiles(self):
-        # global self.ftp
-        # self.ftp.retrlines('LIST')     # Lists the contents of the directory
-        print self.ftp.pwd()
         data = []
         data = self.ftp.nlst()
         return data
 
-# Get Files 
+    # Download a file from the server 
     def getFile(self, path):
+        # Reset variable values
         self.sizeWritten = 0
         self.totSize = 0
         self.percent = 0
 
-        print path
         localDirec, f = os.path.split(path)
 
         self.totSize = self.getFileSize(f)
         os.chdir(localDirec)
 
+        # Download the file in chunks of 8192bytes while updating the progress bar
         with open(f, 'wb') as fhandle:
             def callback(chunk):
                 fhandle.write(chunk)
@@ -75,119 +70,108 @@ class MyFrame(wx.Frame):
                 self.gauge_1.SetValue(self.percent)
             self.ftp.retrbinary('RETR ' + f, callback, 8192)
 
-
-        # fhandle = open(filename, 'wb')
-        # self.ftp.retrbinary('RETR ' + f, open(f, 'wb').write, 8192, self.downProgress)
-        # fhandle.close()
-        # f.close()
-
-
-
         self.gauge_1.SetValue(0)
-        print 'Done downloading'
 
-# Up File
+    # Upload a file to the server
     def upFile(self, event, filename):
         self.sizeWritten = 0
         self.totSize = 0
         self.percent = 0
 
         direc, f = os.path.split(filename)
-        os.chdir(direc)  #changes to the directory of the file
+        os.chdir(direc)
         self.totSize = os.path.getsize(f)
 
-        # self.ftp.storlines('STOR '+f, open(f))    # uploads the file to the server
+        # Upload the file in chunks, use callback function fileProgress to update 
+        # the progress bar with the status
+        self.ftp.storbinary('STOR '+f, open(f,'rb'), 8192, self.fileProgress)
 
-        self.ftp.storbinary('STOR '+f, open(f,'rb'), 8192, self.fileProgress)    # uploads the file to the server
-        # f.close()
+        # Wait for two seconds then reset the progress bar to zero
         time.sleep(2)
         self.gauge_1.SetValue(0)
-        print 'Done uploading'
 
-# Delete Files 
+    # Delete a file from the server 
     def deleteFile(self, filename):
         self.ftp.delete(filename)
 
-# Get Current File 
+    # Return the current directory 
     def GetCurrentDir(self):
-        # print self.ftp.pwd()
         return self.ftp.pwd()
 
-# Set Current Directory
+    # Set the server to the current directory
     def SetCurrentDir(self, nameOfDir):
-        # print "Setting curr dir"
-        # print nameOfDir
         self.ftp.cwd(nameOfDir)
 
-# Create New Directory 
+    # Create a New Directory 
     def CreateNewDir(self, name):
         self.ftp.dir()
         # os.chdir(GetCurrentDir())
         self.ftp.mkd(name)
 
-# Delete File 
+    # Delete a File 
     def deleteFile(self, fileName):
         self.ftp.delete(fileName)
 
-# Delete Directory 
+    # Delete a Directory 
     def deleteDir(self, dirName):
+        # Function used to recursivley clear out a chosen directory
         def cleanOut():
             for d in self.ftp.nlst():
                 try:
                     self.ftp.delete(d) # delete the file
                 except:
                     self.ftp.cwd(d) # it's actually a directory; clean it
-                    print self.ftp.pwd()
+                    
+                    # Called to clean out subdirectory
                     cleanOut()
+
+                    # Go back one level and delete the subdirectory
                     self.ftp.cwd('..')
                     self.ftp.rmd(d)
         
-        # self.ftp.rmd(dirName)
+        # Go the directory to delete
         self.ftp.cwd(dirName)
-        print 'cleanout ',self.ftp.pwd()
+
+        # Call the function to cleanout the directory
         cleanOut()
 
-
+        # Go to parent directory of the one to be deleted and then delete selected directory
         self.ftp.cwd('..')
         self.ftp.rmd(dirName)
 
-# Set Permissions 
+    # Set a file's permissions 
     def setMode(self, mode,filename):
+        # Send file command to the server with the permissions to be set
         self.ftp.sendcmd('SITE CHMOD ' + str(mode) + ' ' + filename)
-        print "Permissions have been set"
-        # self.seePerm(filename)
 
-    # def seePerm(self, filename):
-    #     self.ftp.sendcmd('SITE ls -l ' + filename)
-
+    # Function to update the progress bar with a file's progress
     def fileProgress(self, data):
+        # Number of bytes written so far
         self.sizeWritten += 8192
-        print self.sizeWritten
-        print self.totSize
-        # # self.label_2.SetLabel(str(round(self.sizeWritten / 1024. / 1024.,4)) + 'Mb / '+ (str(round(self.totSize / 1024. / 1024.,4)) + 'Mb'))
-        # print (str(round(self.sizeWritten / 1024. / 1024.,4)) + 'Mb / '+ (str(round(self.totSize / 1024. / 1024.,4)) + 'Mb'))
-        # self.currentSize = self.totSize - self.sizeWritten
+
+        # Calculate the percent written based on total file size
         self.percent = int(100 * float(self.sizeWritten)/float(self.totSize))
 
-        print self.percent
-
+        # Allow the progress bar to update
         wx.Yield()
         self.gauge_1.SetValue(self.percent)
 
-        print 'File Progress'
-
+    # Get the size of a file
     def getFileSize(self, filename):
         self.ftp.sendcmd("TYPE i")
         return self.ftp.size(filename)
 
+    # Get a list of the current contents of a directory
     def getDirList(self):
         currentDir = os.getcwd()
         os.chdir(self.homeDir)
         dirFile = open('dirlist.txt', 'a')
 
+        # Clear the directory list file
         dirFile.seek(0)
         dirFile.truncate()
 
+        # Write the line from the dir command
         def callback(line):
             dirFile.write(line)
             dirFile.write('\n')
@@ -197,14 +181,11 @@ class MyFrame(wx.Frame):
         dirFile.close()
         os.chdir(currentDir)
         
-# Quit
+    # Quit the FTP connection
     def quit(self):
         self.ftp.quit()
 
-
-
-
-# Def Init
+# Def Init for GUI items
     def __init__(self, *args, **kwds):
         # begin wxGlade: MyFrame.__init__
         kwds["style"] = wx.DEFAULT_FRAME_STYLE
@@ -243,16 +224,12 @@ class MyFrame(wx.Frame):
         self.Bind(wx.EVT_BUTTON, self.btnExit_Click, self.btnExit)
         # end wxGlade
 
+        # Set the home directory variable
         self.homeDir = os.getcwd()
 
 
-        # Used in conjunction with the easy login
-        # login()
-        # self.showFiles()
-
-# Set Properties
+    # Set Properties
     def __set_properties(self):
-        # begin wxGlade: MyFrame.__set_properties
         self.SetTitle(_("Team 3 FTP Client - Build #832,531"))
         self.SetSize((600, 300))
         self.label_3.SetMinSize((100, 17))
@@ -272,11 +249,9 @@ class MyFrame(wx.Frame):
         self.btnProperties.SetMinSize((150, 29))
         self.btnExit.SetMinSize((150, 29))
         self.gauge_1.SetMinSize((600, 15))
-        # end wxGlade
 
-# Do Layout
+    # Do Layout
     def __do_layout(self):
-        # begin wxGlade: MyFrame.__do_layout
         sizer_1 = wx.BoxSizer(wx.VERTICAL)
         sizer_3 = wx.BoxSizer(wx.HORIZONTAL)
         sizer_6 = wx.BoxSizer(wx.HORIZONTAL)
@@ -309,20 +284,20 @@ class MyFrame(wx.Frame):
         sizer_1.Add(self.gauge_1, 0, 0, 0)
         self.SetSizer(sizer_1)
         self.Layout()
-        # end wxGlade
 
 
-# Button Connect Click
+    # Button to connect to the server
     def btnConnect_Click(self, event):  # wxGlade: MyFrame.<event_handler>
-        # event.Skip()
         address = self.txtHostAddress.GetLineText(0)
-        print address
 
+        # Make sure address block is not blank
         if address == '':
             wx.MessageBox('Please enter address first')
             return
 
+        # Popup box to recieve username and password
         user = wx.TextEntryDialog(None,'Enter username','Login','')
+        
         if user.ShowModal() == wx.ID_OK:
             user = user.GetValue()
             pwd = wx.TextEntryDialog(None,'Enter password','Login','')
@@ -331,6 +306,8 @@ class MyFrame(wx.Frame):
             if not pwd or not user:
                 wx.MessageBox('username/password cannot be blank')
                 return
+        
+        # Check to make sure log in was a success
         if self.login(address, user, pwd) == False:
             wx.MessageBox('Check login credentials')
             return
@@ -341,51 +318,48 @@ class MyFrame(wx.Frame):
             self.getDirList()
 
 
-# Button Double Click
-    def listboxFiles_DoubleClick(self, event):  # wxGlade: MyFrame.<event_handler>
-        # global fullPath
-        print "Entered view dir"
-
+    # Navigate to view a new directory
+    def listboxFiles_DoubleClick(self, event):
         try:        
             if self.listboxFiles.GetStringSelection() == '<--':
                 self.SetCurrentDir('..')
-                # self.fullPath.pop()
                 currDir = self.GetCurrentDir()
                 self.updatePath(currDir)
             else:
                 self.SetCurrentDir(self.listboxFiles.GetStringSelection())
-                # print self.listboxFiles.GetStringSelection()
                 currDir = self.GetCurrentDir()
-                print currDir
-                # self.fullPath.append(currDir)
                 self.updatePath(currDir)
         except:
             wx.MessageBox(self.listboxFiles.GetStringSelection() + ' is not a directory.')
             raise
 
-        
-        # GetCurrentDir()
-
         self.listboxFiles.Clear()
 
+        # Provide a way for the user to go to the parent directory
         if self.GetCurrentDir() != '/':
             self.listboxFiles.Append('<--')
         else:
             self.listboxFiles.Delete(0)
 
+        # Show the files of the directory
         self.showFiles()
 
 
 
-# Upload Click
-    def btnUpload_Click(self, event):  # wxGlade: MyFrame.<event_handler>
+    # Allows the user to upload a file to the server
+    def btnUpload_Click(self, event):
         filename = ''
+       
         dlg = wx.FileDialog(self, message="Choose a file")
+       
         if dlg.ShowModal() == wx.ID_OK:
             filename = dlg.GetPath()
+        
         dlg.Destroy()
+        
         if not filename:
            return
+        
         self.upFile(event, filename)
         self.listboxFiles.Clear()
 
@@ -398,8 +372,8 @@ class MyFrame(wx.Frame):
         
 
 
-# Download Click
-    def btnDownload_Click(self, event):  # wxGlade: MyFrame.<event_handler>
+    # Allows the user to download a file from the server
+    def btnDownload_Click(self, event):
         filename = self.listboxFiles.GetStringSelection()
 
         msg = "Save " + filename + " file"
@@ -414,15 +388,13 @@ class MyFrame(wx.Frame):
         self.getFile(path)
 
 
-# Directory Button Click
-    def btnOpenDir_Click(self, event):  # wxGlade: MyFrame.<event_handler>
+    # Use open button to view a directory
+    def btnOpenDir_Click(self, event):
         self.listboxFiles_DoubleClick(event)
 
 
-# New Directory Button Click
-    def btnNewDir_Click(self, event):  # wxGlade: MyFrame.<event_handler>
-        # os.chdir(GetCurrentDir())
-
+    # Allows user to create a new directory on the server
+    def btnNewDir_Click(self, event):
         dir_name = wx.TextEntryDialog(None,'Enter directory name','Name','')
 
         if dir_name.ShowModal() == wx.ID_CANCEL:
@@ -438,8 +410,9 @@ class MyFrame(wx.Frame):
         self.getDirList()
 
 
-# Delete Button Click
-    def btnDel_Click(self, event):  # wxGlade: MyFrame.<event_handler>
+    # Allows users to delete a file or directories
+    def btnDel_Click(self, event):
+
         item = self.listboxFiles.GetStringSelection()
 
         if item.find('.') != -1:
@@ -456,19 +429,19 @@ class MyFrame(wx.Frame):
         self.getDirList()
 
 
-
-    def btnProperties_Click(self, event):  # wxGlade: MyFrame.<event_handler>
+    # Allows the user to set the permissions of a file
+    def btnProperties_Click(self, event):
         dlg = MyDialog(self)
 
+        # Checks for permissions current set on the file
         def checkProperties(filename):
             propLine = self.getPropLine(filename)
-            print 'Printing prop line'
-            print propLine
 
             owner = propLine[:3]
             group = propLine[3:6]
             public = propLine[6:9]
 
+            # Check off the necessary permissions boxes
             if (owner[0] == 'r'): dlg.chkOwnRead.SetValue(True)
             if (group[0] == 'r'): dlg.chkGrpRead.SetValue(True)
             if (public[0] == 'r'): dlg.chkPubRead.SetValue(True)
@@ -482,7 +455,6 @@ class MyFrame(wx.Frame):
             if (public[2] == 'x'): dlg.chkPubExe.SetValue(True)
 
         filename = self.GetCurrentDir() + self.listboxFiles.GetStringSelection()
-        print filename #DEBUG
 
         direc, f = os.path.split(filename)
 
@@ -491,7 +463,7 @@ class MyFrame(wx.Frame):
         if dlg.ShowModal() == wx.ID_OK:
             mode = 0
 
-        
+            # Add permission values for the boxes checked
             if(dlg.chkOwnRead.GetValue()): mode += 400
             if(dlg.chkOwnWrite.GetValue()): mode += 200
             if(dlg.chkOwnExe.GetValue()): mode += 100
@@ -501,12 +473,15 @@ class MyFrame(wx.Frame):
             if(dlg.chkPubRead.GetValue()): mode += 4
             if(dlg.chkPubWrite.GetValue()): mode += 2
             if(dlg.chkPubExe.GetValue()): mode += 1
+            
+            # Set the file permissions
             self.setMode(mode,filename)
             self.getDirList()
+        
         dlg.Destroy()
 
 
-
+    # Get the relevant line containing permissions from the directory list
     def getPropLine(self, filename):
         foundLine = ''
 
@@ -517,27 +492,21 @@ class MyFrame(wx.Frame):
         datafile = file('dirlist.txt')
         found = False
         
+        # Find the correct line
         for line in datafile:
             if filename in line:
                 found = True
                 foundLine = line
-                # print line
                 break
 
-        # if True:
-        #     print "true"
-        #     print foundLine
-        # else:
-        #     print "false"
-
+        # Slice the relevant permissions
         line = foundLine[1:10]
-        # print line
 
         os.chdir(currentDir)
 
         return line
 
-# Show Files
+    # Show the files in the list box
     def showFiles(self):
         data = self.listFiles()
 
@@ -545,23 +514,19 @@ class MyFrame(wx.Frame):
             self.listboxFiles.Append(x)
 
 
-# Update Path
+    # Update the path dialog text box
     def updatePath(self, currDir):
-        # filename = self.listboxFiles.GetStringSelection()
-        # path = str(ShowPath(filename))
         self.txtPath.Clear()
-        # path = ''.join(self.fullPath)
         self.txtPath.WriteText(currDir)
 
-
+    # Allows the program to exit via button
     def btnExit_Click(self, event):
         FTP_Client.Exit()
-# end of class MyFrame
+
 
 # MyDialog Class
 class MyDialog(wx.Dialog):
     def __init__(self, *args, **kwds):
-        # begin wxGlade: MyDialog.__init__
         kwds["style"] = wx.DEFAULT_DIALOG_STYLE
         wx.Dialog.__init__(self, *args, **kwds)
         self.chkOwnRead = wx.CheckBox(self, wx.ID_ANY, _("Read"))
@@ -582,15 +547,11 @@ class MyDialog(wx.Dialog):
         self.__do_layout()
 
         self.Bind(wx.EVT_BUTTON, self.btnPropOK_Click, self.btnPropOK)
-        # end wxGlade
 
     def __set_properties(self):
-        # begin wxGlade: MyDialog.__set_properties
         self.SetTitle(_("Properties"))
-        # end wxGlade
 
     def __do_layout(self):
-        # begin wxGlade: MyDialog.__do_layout
         sizer_15 = wx.BoxSizer(wx.VERTICAL)
         self.sizer_18_staticbox.Lower()
         sizer_18 = wx.StaticBoxSizer(self.sizer_18_staticbox, wx.HORIZONTAL)
@@ -614,15 +575,11 @@ class MyDialog(wx.Dialog):
         self.SetSizer(sizer_15)
         sizer_15.Fit(self)
         self.Layout()
-        # end wxGlade
 
-    def btnPropOK_Click(self, event):  # wxGlade: MyDialog.<event_handler>
+    def btnPropOK_Click(self, event):
         print "Event handler 'btnPropOK_Click' not implemented!"
         self.EndModal(wx.ID_OK)
         event.Skip()
-
-
-# end of class MyDialog
 
 # MyApp Class
 class MyApp(wx.App):
@@ -632,8 +589,6 @@ class MyApp(wx.App):
         self.SetTopWindow(frame_1)
         frame_1.Show()
         return 1
-
-# end of class MyApp
 
 # Main
 if __name__ == "__main__":
