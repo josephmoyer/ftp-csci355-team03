@@ -131,6 +131,20 @@ class MyFrame(wx.Frame):
 
 # Delete Directory 
     def deleteDir(self, dirName):
+        # self.ftp.rmd(dirName)
+        self.ftp.cwd(dirName)
+        print 'cleanout ',self.ftp.pwd()
+    
+        for d in self.ftp.nlst():
+            try:
+                self.ftp.delete(d) # delete the file
+            except:
+                self.ftp.cwd(d) # it's actually a directory; clean it
+                cleanOut(ftp)
+                self.ftp.cwd('..')
+                self.ftp.rmd(d)
+
+        self.ftp.cwd('..')
         self.ftp.rmd(dirName)
 
 # Set Permissions 
@@ -235,7 +249,7 @@ class MyFrame(wx.Frame):
 # Set Properties
     def __set_properties(self):
         # begin wxGlade: MyFrame.__set_properties
-        self.SetTitle(_("Team 3 FTP Client - Build #832,530"))
+        self.SetTitle(_("Team 3 FTP Client - Build #832,531"))
         self.SetSize((600, 300))
         self.label_3.SetMinSize((100, 17))
         self.txtHostAddress.SetMinSize((400, 27))
@@ -320,6 +334,7 @@ class MyFrame(wx.Frame):
             wx.MessageBox('Login Successful')
             self.showFiles()
             self.updatePath('/')
+            self.getDirList()
 
 
 # Button Double Click
@@ -375,6 +390,7 @@ class MyFrame(wx.Frame):
             self.listboxFiles.Append('<--')
 
         self.showFiles()
+        self.getDirList()
         
 
 
@@ -415,6 +431,7 @@ class MyFrame(wx.Frame):
         self.listboxFiles.Append('<--')
 
         self.showFiles()
+        self.getDirList()
 
 
 # Delete Button Click
@@ -432,6 +449,7 @@ class MyFrame(wx.Frame):
             self.listboxFiles.Append('<--')
         
         self.showFiles()
+        self.getDirList()
 
 
 
@@ -480,6 +498,7 @@ class MyFrame(wx.Frame):
             if(dlg.chkPubWrite.GetValue()): mode += 2
             if(dlg.chkPubExe.GetValue()): mode += 1
             self.setMode(mode,filename)
+            self.getDirList()
         dlg.Destroy()
 
 
