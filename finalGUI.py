@@ -39,8 +39,6 @@ class MyFrame(wx.Frame):
             # Login credential error
             if '530' in error:
                 return False
-            # if '110' in error:
-            # 	wx.MessageBox('Connection Has Timed Out')
         return True
 
     # List server files
@@ -86,12 +84,8 @@ class MyFrame(wx.Frame):
 
         # Upload the file in chunks, use callback function fileProgress to update 
         # the progress bar with the status
-        try:
-        	self.ftp.storbinary('STOR '+f, open(f,'rb'), 8192, self.fileProgress)
-        except ftlib.all_errors, e:
-        	error = str(e).split(None,1)
-        	if '110' in error:
-        		wx.MessageBox('Connection Has Timed Out')
+        self.ftp.storbinary('STOR '+f, open(f,'rb'), 8192, self.fileProgress)
+
         # Wait for two seconds then reset the progress bar to zero
         time.sleep(2)
         self.gauge_1.SetValue(0)
@@ -389,7 +383,6 @@ class MyFrame(wx.Frame):
 
         if save_dlg.ShowModal() == wx.ID_CANCEL:
             return
-
         path = save_dlg.GetPath()
         try:
             self.getFile(path)
@@ -450,8 +443,6 @@ class MyFrame(wx.Frame):
         # Checks for permissions current set on the file
         def checkProperties(filename):
             propLine = self.getPropLine(filename)
-            print self.GetCurrentDir()
-            print filename
 
             owner = propLine[:3]
             group = propLine[3:6]
@@ -470,12 +461,11 @@ class MyFrame(wx.Frame):
             if (group[2] == 'x'): dlg.chkGrpExe.SetValue(True)
             if (public[2] == 'x'): dlg.chkPubExe.SetValue(True)
 
-        filename = self.listboxFiles.GetStringSelection()
+        filename = self.GetCurrentDir() + self.listboxFiles.GetStringSelection()
 
-        # direc, f = os.path.split(filename)
-        # print f
+        direc, f = os.path.split(filename)
 
-        checkProperties(filename)
+        checkProperties(f)
 
         if dlg.ShowModal() == wx.ID_OK:
             mode = 0
@@ -505,15 +495,13 @@ class MyFrame(wx.Frame):
         currentDir = os.getcwd()
         os.chdir(self.homeDir)
 
-        fileToFind = filename.split('.')
-
 
         datafile = file('dirlist.txt')
         found = False
         
         # Find the correct line
         for line in datafile:
-            if fileToFind[0] in line:
+            if filename in line:
                 found = True
                 foundLine = line
                 break
@@ -596,7 +584,6 @@ class MyDialog(wx.Dialog):
         self.Layout()
 
     def btnPropOK_Click(self, event):
-        print "Event handler 'btnPropOK_Click' not implemented!"
         self.EndModal(wx.ID_OK)
         event.Skip()
 
